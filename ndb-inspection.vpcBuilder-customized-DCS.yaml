@@ -34,12 +34,18 @@ global:
 
 # OPTIONAL: The endpoint provider.  This provider provides centralized interVPC inspection services.
 providers:
+  internet:
+    central-egress:
+      vpcCidr: 100.64.1.0/24
+      style: natEgress
+      useTransit: central
+      
   firewall:
 # REQUIRED: the name of the interface provider.  This must be unique within the config file.  It is referred to by the VPCs and Transit routes
     awsNetworkFirewall:
       # REQUIRED: This VPC will create (per availability zone) a Transit Gateway subnet of /28.  A Firewall subnet of /28.  For three AZs
       # a /25 should suffice
-      vpcCidr: 10.3.0.0/16
+      vpcCidr: 100.64.0.0/24
       # REQUIRED: All providers are Transit Gateway attached in our model.  This is the name of the transit gateway to attach to.
       # it must exist with the same name in the transitGateways section.
       useTransit: central
@@ -68,14 +74,15 @@ vpcs:
     # REQUIRED: Definition section for the subnets to deploy.
     # NOTE: Once initially deployed - the Subnet Names in this section cannot be changed.  This is meant to be an 'additive' section
     # after your initial deployment you can add more Subnets, but consider it a 1-way door.
+    providerInternet: central-egress
     subnets:
       TgwSubnet:
         # REQUIRED: The CIDR mask to use for the subnet.  Bear in mind these will be decided by the CDK based on the VPC CIDR
         # range specified above.
         # In the future version I will support specifying a full CIDR here versus just a Mask
-        cidrMask : 24
+        cidrMask : 20
       WorkloadSubnet:
-        cidrMask : 24
+        cidrMask : 20
 
 # workload 2
   workload2:
@@ -83,11 +90,12 @@ vpcs:
     vpcCidr: 10.2.0.0/16
     availabilityZones:
       - eu-central-1b
+    providerInternet: central-egress
     subnets:
       TgwSubnet:
-        cidrMask : 24
+        cidrMask : 20
       WorkloadSubnet:
-        cidrMask : 24
+        cidrMask : 20
 # OPTIONAL|DEPENDANT.  If any VPCs refer to, providers are defined, or VPNs are defined, this section is required.
 # this describes the transit gateways to create (NOTE: at-present we only support one per config file).
 transitGateways:
@@ -110,10 +118,10 @@ transitGateways:
         # REQUIRED: The name of the thing we're routing from.  This can be a VPC, or a Provider name.
       - vpcName: workload2
         # REQUIRED: The name of the thing we're routing toward.  This can be a VPC, VPN, DxGw, TgwPeer, or Provider name.
-        routesTo: workload1
+        routesTo: central-egress
         # OPTIONAL: If we're going to inspect the traffic.  This must be the name of a firewall provider.  Routes are adjusted automatically
         # to assure it passes through the inspection VPC before arriving at its routesTo and vice versa.
         inspectedBy: awsNetworkFirewall
       - vpcName: workload1
-        routesTo: workload2
+        routesTo: central-egress
         inspectedBy: awsNetworkFirewall
