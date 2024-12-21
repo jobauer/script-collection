@@ -31,6 +31,7 @@ global:
 #    newCustomerGatewayAsn: XXXXX
 #    newCustomerGatewayName: onprem-vpn
 #    useTransit: central
+#    Minor change in comments here
 
 # OPTIONAL: The endpoint provider.  This provider provides centralized interVPC inspection services.
 providers:
